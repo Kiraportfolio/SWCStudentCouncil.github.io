@@ -1,0 +1,1634 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>แผงควบคุม | ระบบนับคะแนนการเลือกตั้งสภานักเรียน</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <!-- API Client -->
+    <meta name="gas-api-url" content="https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec">
+    <script src="api.js"></script>
+    <style>
+        :root {
+            --c-green: #2A9D8F;
+            --c-yellow: #E9C46A;
+            --c-black: #264653;
+            --c-bg: #F0F2F5;
+            --c-card: #fff;
+            --c-border: #e5e7eb;
+            --c-muted: #6E6E73;
+            --c-danger: #E74C3C;
+            --c-warn: #F39C12;
+            --c-success: #27AE60;
+            --radius: 16px;
+            --shadow: 0 2px 12px rgba(0, 0, 0, .08);
+            --font: 'Prompt', sans-serif
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
+
+        body {
+            font-family: var(--font);
+            background: var(--c-bg);
+            color: #1d1d1f;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column
+        }
+
+        /* Header */
+        .header {
+            background: var(--c-card);
+            padding: 10px 0;
+            border-bottom: 1px solid var(--c-border);
+            position: sticky;
+            top: 0;
+            z-index: 100
+        }
+
+        .header-content {
+            max-width: 1300px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between
+        }
+
+        .logo-group {
+            display: flex;
+            align-items: center;
+            gap: 10px
+        }
+
+        .logo-img {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            object-fit: cover
+        }
+
+        .sys-title h1 {
+            font-size: .88rem;
+            font-weight: 600;
+            color: var(--c-black)
+        }
+
+        .sys-title span {
+            font-size: .65rem;
+            color: var(--c-muted)
+        }
+
+        .header-nav {
+            display: flex;
+            align-items: center;
+            gap: 12px
+        }
+
+        .nav-link {
+            font-size: .8rem;
+            color: var(--c-muted);
+            text-decoration: none;
+            cursor: pointer;
+            background: none;
+            border: none;
+            font-family: var(--font);
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 6px 10px;
+            border-radius: 8px;
+            transition: .2s
+        }
+
+        .nav-link:hover,
+        .nav-link.active {
+            color: var(--c-black);
+            background: var(--c-bg)
+        }
+
+        .nav-divider {
+            width: 1px;
+            height: 16px;
+            background: var(--c-border)
+        }
+
+        /* Tabs */
+        .tab-bar {
+            background: var(--c-card);
+            border-bottom: 1px solid var(--c-border);
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch
+        }
+
+        .tab-bar-inner {
+            max-width: 1300px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            gap: 4px
+        }
+
+        .tab-btn {
+            padding: 12px 18px;
+            font-size: .85rem;
+            font-weight: 600;
+            color: var(--c-muted);
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            font-family: var(--font);
+            white-space: nowrap;
+            transition: .2s;
+            display: flex;
+            align-items: center;
+            gap: 6px
+        }
+
+        .tab-btn:hover {
+            color: var(--c-black)
+        }
+
+        .tab-btn.active {
+            color: var(--c-green);
+            border-bottom-color: var(--c-green)
+        }
+
+        /* Main */
+        .main {
+            flex: 1;
+            max-width: 1300px;
+            margin: 0 auto;
+            padding: 24px 20px;
+            width: 100%
+        }
+
+        .tab-panel {
+            display: none
+        }
+
+        .tab-panel.active {
+            display: block
+        }
+
+        /* Cards */
+        .card {
+            background: var(--c-card);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 24px;
+            margin-bottom: 20px
+        }
+
+        .card-title {
+            font-size: 1.05rem;
+            font-weight: 700;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--c-black)
+        }
+
+        /* Vote Grid */
+        .vote-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+            margin-bottom: 20px
+        }
+
+        .vote-card {
+            background: var(--c-card);
+            border-radius: var(--radius);
+            padding: 24px;
+            text-align: center;
+            box-shadow: var(--shadow);
+            border-top: 4px solid var(--c-border);
+            transition: .3s
+        }
+
+        .vote-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, .12)
+        }
+
+        .vote-card .party-num {
+            font-size: .8rem;
+            font-weight: 700;
+            padding: 4px 12px;
+            border-radius: 20px;
+            background: var(--c-bg);
+            display: inline-block;
+            margin-bottom: 8px
+        }
+
+        .vote-card .party-name {
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+            min-height: 2.6em;
+            display: flex;
+            align-items: center;
+            justify-content: center
+        }
+
+        .vote-card .vote-count {
+            font-size: 3rem;
+            font-weight: 800;
+            line-height: 1
+        }
+
+        /* Stats */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+            margin-bottom: 16px
+        }
+
+        .stat-box {
+            background: var(--c-bg);
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center
+        }
+
+        .stat-box .stat-val {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--c-black)
+        }
+
+        .stat-box .stat-lbl {
+            font-size: .75rem;
+            color: var(--c-muted);
+            margin-top: 4px
+        }
+
+        /* CRUD Table */
+        .crud-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: .88rem
+        }
+
+        .crud-table th {
+            text-align: left;
+            padding: 10px 12px;
+            background: var(--c-bg);
+            font-weight: 600;
+            color: var(--c-black);
+            border-bottom: 2px solid var(--c-border)
+        }
+
+        .crud-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--c-border);
+            vertical-align: middle
+        }
+
+        .crud-table tr:hover td {
+            background: #f8fafc
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: .85rem;
+            cursor: pointer;
+            border: none;
+            font-family: var(--font);
+            transition: .2s
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: .78rem;
+            border-radius: 8px
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--c-green), #1D7A70);
+            color: #fff
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(42, 157, 143, .3)
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, var(--c-danger), #c0392b);
+            color: #fff
+        }
+
+        .btn-warn {
+            background: linear-gradient(135deg, var(--c-yellow), #D4A84B);
+            color: var(--c-black)
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1.5px solid var(--c-border);
+            color: var(--c-black)
+        }
+
+        .btn-outline:hover {
+            border-color: var(--c-green);
+            color: var(--c-green)
+        }
+
+        .btn:disabled {
+            opacity: .5;
+            cursor: not-allowed
+        }
+
+        /* Badge */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: .72rem;
+            font-weight: 600
+        }
+
+        .badge-green {
+            background: rgba(42, 157, 143, .12);
+            color: var(--c-green)
+        }
+
+        .badge-blue {
+            background: rgba(37, 99, 235, .1);
+            color: #2563eb
+        }
+
+        .badge-red {
+            background: rgba(231, 76, 60, .1);
+            color: var(--c-danger)
+        }
+
+        .badge-gray {
+            background: var(--c-bg);
+            color: var(--c-muted)
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, .5);
+            backdrop-filter: blur(4px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px
+        }
+
+        .modal-overlay.active {
+            display: flex
+        }
+
+        .modal {
+            background: var(--c-card);
+            border-radius: var(--radius);
+            padding: 28px;
+            max-width: 480px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: modalIn .25s ease
+        }
+
+        @keyframes modalIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px)
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0)
+            }
+        }
+
+        .modal h3 {
+            font-size: 1.1rem;
+            margin-bottom: 16px;
+            color: var(--c-black)
+        }
+
+        .form-group {
+            margin-bottom: 14px
+        }
+
+        .form-group label {
+            display: block;
+            font-size: .82rem;
+            font-weight: 600;
+            margin-bottom: 4px;
+            color: var(--c-black)
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1.5px solid var(--c-border);
+            border-radius: 10px;
+            font-size: .9rem;
+            font-family: var(--font);
+            transition: .2s
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--c-green);
+            box-shadow: 0 0 0 3px rgba(42, 157, 143, .1)
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 20px
+        }
+
+        /* Toast */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 2000;
+            display: flex;
+            flex-direction: column;
+            gap: 8px
+        }
+
+        .toast {
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-size: .85rem;
+            font-weight: 500;
+            color: #fff;
+            animation: toastIn .3s ease;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, .15);
+            display: flex;
+            align-items: center;
+            gap: 8px
+        }
+
+        .toast-success {
+            background: var(--c-green)
+        }
+
+        .toast-error {
+            background: var(--c-danger)
+        }
+
+        .toast-warn {
+            background: var(--c-warn);
+            color: var(--c-black)
+        }
+
+        @keyframes toastIn {
+            from {
+                opacity: 0;
+                transform: translateX(40px)
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0)
+            }
+        }
+
+        /* Color preview */
+        .color-dot {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: inline-block;
+            border: 2px solid rgba(0, 0, 0, .1);
+            vertical-align: middle
+        }
+
+        .logo-preview {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            object-fit: cover;
+            background: #f0f0f0
+        }
+
+        /* ===== PARTY CARDS GRID ===== */
+        .party-cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 16px;
+        }
+
+        .party-card-item {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, .06);
+            border: 1px solid var(--c-border);
+            transition: all .3s cubic-bezier(.4, 0, .2, 1);
+            position: relative;
+        }
+
+        .party-card-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 28px rgba(0, 0, 0, .1);
+        }
+
+        .party-card-colorstrip {
+            height: 6px;
+            width: 100%;
+        }
+
+        .party-card-body {
+            padding: 20px;
+        }
+
+        .party-card-header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 14px;
+        }
+
+        .party-card-logo {
+            width: 56px;
+            height: 56px;
+            border-radius: 14px;
+            overflow: hidden;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f5f7fa;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, .08);
+        }
+
+        .party-card-logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .party-card-logo .logo-fallback {
+            font-size: 1.5rem;
+            opacity: .5;
+        }
+
+        .party-card-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .party-card-number {
+            font-size: .72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .5px;
+            opacity: .6;
+            margin-bottom: 2px;
+        }
+
+        .party-card-name {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: var(--c-text);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .party-card-leader {
+            font-size: .78rem;
+            color: var(--c-muted);
+            margin-top: 1px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .party-card-stats {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 14px;
+            padding: 10px 14px;
+            background: linear-gradient(135deg, #f8f9fa, #f0f4f8);
+            border-radius: 10px;
+        }
+
+        .party-card-vote-count {
+            font-size: 1.6rem;
+            font-weight: 800;
+            line-height: 1;
+        }
+
+        .party-card-vote-label {
+            font-size: .72rem;
+            color: var(--c-muted);
+            font-weight: 600;
+        }
+
+        .party-card-progress {
+            flex: 1;
+        }
+
+        .party-card-progress-track {
+            height: 6px;
+            border-radius: 3px;
+            background: rgba(0, 0, 0, .06);
+            overflow: hidden;
+        }
+
+        .party-card-progress-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width .6s ease;
+            min-width: 2px;
+        }
+
+        .party-card-progress-label {
+            font-size: .68rem;
+            color: var(--c-muted);
+            text-align: right;
+            margin-top: 3px;
+        }
+
+        .party-card-actions {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+            padding-top: 12px;
+            border-top: 1px solid var(--c-border);
+        }
+
+        .party-card-actions .btn {
+            font-size: .78rem;
+            padding: 7px 14px;
+            border-radius: 8px;
+        }
+
+        .party-empty-state {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--c-muted);
+        }
+
+        .party-empty-state i {
+            font-size: 3rem;
+            opacity: .3;
+            margin-bottom: 12px;
+            display: block;
+        }
+
+        @media (max-width: 640px) {
+            .party-cards-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Locked banner */
+        .locked-banner {
+            background: linear-gradient(135deg, #FFF3CD, #FFF9E6);
+            color: #856404;
+            padding: 16px 20px;
+            border-radius: 14px;
+            margin-bottom: 20px;
+            display: none;
+            align-items: center;
+            gap: 16px;
+            border: 1px solid #FFEEBA
+        }
+
+        .locked-banner.show {
+            display: flex
+        }
+
+        .locked-banner i {
+            font-size: 1.5rem
+        }
+
+        /* Signature form */
+        .sig-form {
+            display: grid;
+            grid-template-columns: 1fr 1fr auto;
+            gap: 14px;
+            align-items: end
+        }
+
+        @media(max-width:600px) {
+            .sig-form {
+                grid-template-columns: 1fr
+            }
+        }
+
+        /* Status badge */
+        .status-pill {
+            padding: 6px 16px;
+            border-radius: 50px;
+            font-size: .82rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px
+        }
+
+        .status-active {
+            background: #E6F4F1;
+            color: var(--c-green)
+        }
+
+        .status-active::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            background: var(--c-green);
+            border-radius: 50%;
+            animation: pulse 1.5s infinite
+        }
+
+        .status-locked {
+            background: #f8f9fa;
+            color: var(--c-muted);
+            border: 1px solid var(--c-border)
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1
+            }
+
+            50% {
+                opacity: .4
+            }
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--c-black);
+            color: #fff;
+            padding: 24px 20px;
+            text-align: center;
+            margin-top: auto
+        }
+
+        .footer-sub {
+            font-size: .82rem;
+            opacity: .8
+        }
+
+        .footer-dev {
+            font-size: .72rem;
+            opacity: .5;
+            margin-top: 4px
+        }
+
+        /* Responsive */
+        @media(max-width:768px) {
+            .header-nav {
+                display: none
+            }
+
+            .tab-btn {
+                padding: 10px 12px;
+                font-size: .78rem
+            }
+
+            .vote-grid {
+                grid-template-columns: 1fr
+            }
+
+            .stats-row {
+                grid-template-columns: 1fr 1fr
+            }
+
+            .crud-table {
+                font-size: .78rem
+            }
+
+            .crud-table th,
+            .crud-table td {
+                padding: 8px
+            }
+        }
+
+        /* PDF hidden content */
+        #pdfContent {
+            display: none;
+            padding: 40px;
+            background: #fff;
+            font-family: 'Prompt', sans-serif
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo-group">
+                <img class="logo-img" id="schoolLogo"
+                    src="https://drive.google.com/thumbnail?id=1l-r_ZGA-N4rKipi5zz4DKOoMJL-W82zW&sz=w200" alt="โลโก้">
+                <img class="logo-img" id="councilLogo"
+                    src="https://drive.google.com/thumbnail?id=1MTw6a6RfcCU-QTIQQ_EyhHLB_8CE9vHy&sz=w200" alt="สภา">
+                <div class="sys-title">
+                    <h1 id="headerTitle">ระบบนับคะแนนการเลือกตั้งสภานักเรียน</h1>
+                    <span id="headerSub">กำลังโหลด...</span>
+                </div>
+            </div>
+            <div class="header-nav">
+                <a class="nav-link active"><i class="fa-solid fa-gauge-high"></i> แผงควบคุม</a>
+                <div class="nav-divider"></div>
+                <a class="nav-link" onclick="navigateTo('counting')"><i class="fa-solid fa-chart-simple"></i>
+                    นับคะแนน</a>
+                <div class="nav-divider"></div>
+                <a class="nav-link" onclick="navigateTo('ballot')"><i class="fa-solid fa-check-to-slot"></i> ลงคะแนน</a>
+                <div class="nav-divider"></div>
+                <a class="nav-link" onclick="navigateTo('ranking')"><i class="fa-solid fa-tv"></i> ผลสด</a>
+                <div class="nav-divider"></div>
+                <button class="nav-link" onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i> ออก</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Tab Bar -->
+    <div class="tab-bar">
+        <div class="tab-bar-inner">
+            <button class="tab-btn active" data-tab="dashboard"><i class="fa-solid fa-gauge-high"></i>
+                Dashboard</button>
+            <button class="tab-btn" data-tab="parties"><i class="fa-solid fa-landmark"></i> จัดการพรรค</button>
+            <button class="tab-btn" data-tab="users"><i class="fa-solid fa-users-gear"></i> จัดการผู้ใช้</button>
+            <button class="tab-btn" data-tab="settings"><i class="fa-solid fa-gear"></i> ตั้งค่า</button>
+            <button class="tab-btn" data-tab="logs"><i class="fa-solid fa-clock-rotate-left"></i> ประวัติ</button>
+            <button class="tab-btn" data-tab="actions"><i class="fa-solid fa-lock"></i> ยืนยัน/ส่งออก</button>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="main">
+
+        <!-- TAB: Dashboard -->
+        <div class="tab-panel active" id="tab-dashboard">
+            <div class="locked-banner" id="lockedBanner"><i class="fa-solid fa-lock"></i>
+                <div>
+                    <h3>ผลคะแนนถูกล็อคแล้ว</h3>
+                    <p id="lockedInfo"></p>
+                </div>
+            </div>
+            <div class="card">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+                    <div class="card-title" style="margin:0"><i class="fa-solid fa-chart-bar"></i> คะแนนแต่ละพรรค</div>
+                    <span class="status-pill status-active" id="statusPill">กำลังนับคะแนน</span>
+                </div>
+                <div class="vote-grid" id="voteGrid"><!-- Dynamic --></div>
+            </div>
+            <div class="card">
+                <div class="card-title"><i class="fa-solid fa-chart-pie"></i> สรุปผลการนับคะแนน</div>
+                <div class="stats-row" id="statsRow"><!-- Dynamic --></div>
+                <div class="stats-row" id="statsRow2"><!-- Dynamic --></div>
+            </div>
+        </div>
+
+        <!-- TAB: Parties -->
+        <div class="tab-panel" id="tab-parties">
+            <div class="card" style="background:transparent;box-shadow:none;border:none;padding:0">
+                <div
+                    style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px">
+                    <div>
+                        <div class="card-title" style="margin:0;font-size:1.3rem"><i class="fa-solid fa-landmark"></i>
+                            จัดการพรรค</div>
+                        <p style="margin:4px 0 0;font-size:.85rem;color:var(--c-muted)">เพิ่ม ลบ
+                            แก้ไขพรรคสำหรับการเลือกตั้งครั้งนี้และอนาคต</p>
+                    </div>
+                    <button class="btn btn-primary" onclick="openPartyModal()"
+                        style="border-radius:30px;padding:10px 22px;font-weight:700;gap:8px;box-shadow:0 4px 14px rgba(42,157,143,.35)">
+                        <i class="fa-solid fa-plus"></i> เพิ่มพรรคใหม่
+                    </button>
+                </div>
+
+                <!-- Party Cards Grid -->
+                <div id="partyCardsGrid" class="party-cards-grid">
+                    <!-- Dynamic party cards -->
+                    <div style="grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--c-muted)">
+                        <i class="fa-solid fa-spinner fa-spin"
+                            style="font-size:2rem;margin-bottom:12px;display:block"></i>
+                        กำลังโหลดข้อมูลพรรค...
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: Users -->
+        <div class="tab-panel" id="tab-users">
+            <div class="card">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+                    <div class="card-title" style="margin:0"><i class="fa-solid fa-users-gear"></i> จัดการผู้ใช้งาน
+                    </div>
+                    <button class="btn btn-primary" onclick="openUserModal()"><i class="fa-solid fa-user-plus"></i>
+                        เพิ่มผู้ใช้</button>
+                </div>
+                <table class="crud-table">
+                    <thead>
+                        <tr>
+                            <th>ชื่อผู้ใช้</th>
+                            <th>ชื่อที่แสดง</th>
+                            <th>บทบาท</th>
+                            <th>สถานะ</th>
+                            <th>สร้างเมื่อ</th>
+                            <th>จัดการ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="userTableBody"><!-- Dynamic --></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- TAB: Settings -->
+        <div class="tab-panel" id="tab-settings">
+            <div class="card">
+                <div class="card-title"><i class="fa-solid fa-gear"></i> ตั้งค่าการเลือกตั้ง</div>
+                <div class="form-group"><label>ชื่อการเลือกตั้ง</label><input id="cfgElectionName"
+                        placeholder="การเลือกตั้งสภานักเรียน"></div>
+                <div class="form-group"><label>ปีการศึกษา</label><input id="cfgYear" placeholder="2569"></div>
+                <div class="form-group"><label>ชื่อโรงเรียน</label><input id="cfgSchool"
+                        placeholder="โรงเรียนศรีวิชัยวิทยา"></div>
+                <div class="form-group"><label>Google Drive ID โลโก้โรงเรียน</label><input id="cfgSchoolLogo"
+                        placeholder="1l-r_ZGA..."></div>
+                <div class="form-group"><label>Google Drive ID โลโก้สภานักเรียน</label><input id="cfgCouncilLogo"
+                        placeholder="1MTw6a6..."></div>
+                <div class="form-group"><label>ชื่อผู้พัฒนา</label><input id="cfgDev"
+                        placeholder="นายธีรเดช เดชสูงเนิน"></div>
+                <div class="form-group"><label>จำนวนผู้มีสิทธิเลือกตั้ง</label><input type="number" id="cfgEligible"
+                        placeholder="0"></div>
+                <div class="form-group"><label>เปิด/ปิดระบบโหวต</label><select id="cfgVoting">
+                        <option value="true">เปิด</option>
+                        <option value="false">ปิด</option>
+                    </select></div>
+                <div style="margin-top:16px"><button class="btn btn-primary" onclick="saveSettings()"><i
+                            class="fa-solid fa-save"></i> บันทึกการตั้งค่า</button></div>
+            </div>
+        </div>
+
+        <!-- TAB: Logs -->
+        <div class="tab-panel" id="tab-logs">
+            <div class="card">
+                <div class="card-title"><i class="fa-solid fa-clock-rotate-left"></i> ประวัติการเข้าสู่ระบบ</div>
+                <table class="crud-table">
+                    <thead>
+                        <tr>
+                            <th>เวลา</th>
+                            <th>ชื่อ</th>
+                            <th>บทบาท</th>
+                            <th>สถานะ</th>
+                            <th>หมายเหตุ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="logTableBody"><!-- Dynamic --></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- TAB: Actions -->
+        <div class="tab-panel" id="tab-actions">
+            <div class="card" id="signatureSection">
+                <div class="card-title"><i class="fa-solid fa-signature"></i> ยืนยันและล็อคผลคะแนน</div>
+                <p style="margin-bottom:16px;color:var(--c-muted);font-size:.88rem">เมื่อยืนยันแล้ว
+                    ผลคะแนนจะถูกล็อคและไม่สามารถแก้ไขได้อีก</p>
+                <div class="sig-form">
+                    <div class="form-group"><label>ชื่อครูที่ปรึกษา</label><input id="teacherName" placeholder="ครู...">
+                    </div>
+                    <div class="form-group"><label>รหัสยืนยัน (รหัสผ่านครูที่ปรึกษา)</label><input type="password"
+                            id="confirmCode" placeholder="รหัสยืนยัน"></div>
+                    <button class="btn btn-danger" onclick="lockResults()" id="lockBtn"><i class="fa-solid fa-lock"></i>
+                        ล็อค</button>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-title"><i class="fa-solid fa-file-pdf"></i> ส่งออกผลคะแนน</div>
+                <div style="display:flex;gap:12px;flex-wrap:wrap">
+                    <button class="btn btn-primary" onclick="exportPDF()"><i class="fa-solid fa-download"></i> ดาวน์โหลด
+                        PDF</button>
+                    <button class="btn btn-warn" onclick="resetData()" id="resetBtn"><i
+                            class="fa-solid fa-rotate-left"></i> รีเซ็ตข้อมูลทั้งหมด</button>
+                    <button class="btn btn-outline" onclick="unlockResults()" id="unlockBtn" style="display:none"><i
+                            class="fa-solid fa-unlock"></i> ปลดล็อค</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- PDF Content -->
+    <div id="pdfContent">
+        <div style="text-align:center;margin-bottom:30px">
+            <h1 style="font-size:1.5rem;margin-bottom:10px;color:#264653" id="pdfTitle">ผลการนับคะแนน</h1>
+            <p style="color:#666" id="pdfSubtitle"></p>
+            <div id="pdfStatusBadge"
+                style="display:inline-block;margin-top:15px;padding:8px 20px;border-radius:20px;font-weight:600;font-size:.9rem">
+            </div>
+        </div>
+        <table style="width:100%;border-collapse:collapse;margin-bottom:30px">
+            <thead>
+                <tr style="background:#264653;color:#fff">
+                    <th style="padding:12px;text-align:center">อันดับ</th>
+                    <th style="padding:12px">เบอร์</th>
+                    <th style="padding:12px">พรรค</th>
+                    <th style="padding:12px;text-align:right">คะแนน</th>
+                    <th style="padding:12px;text-align:right">ร้อยละ</th>
+                </tr>
+            </thead>
+            <tbody id="pdfRankingBody"></tbody>
+        </table>
+        <div id="pdfStats" style="display:grid;grid-template-columns:repeat(3,1fr);gap:15px;margin-bottom:30px"></div>
+        <div id="pdfSignature" style="margin-top:40px;padding:20px;border:2px solid #ddd;border-radius:8px">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+                <div>
+                    <p style="color:#666;font-size:.85rem">ยืนยันโดย</p>
+                    <p style="font-weight:600;font-size:1.1rem" id="pdfTeacher">-</p>
+                </div>
+                <div>
+                    <p style="color:#666;font-size:.85rem">วันที่ยืนยัน</p>
+                    <p style="font-weight:600;font-size:1.1rem" id="pdfDate">-</p>
+                </div>
+            </div>
+        </div>
+        <div
+            style="margin-top:30px;text-align:center;color:#999;font-size:.8rem;border-top:1px solid #eee;padding-top:20px">
+            <p>เอกสารนี้สร้างจากระบบนับคะแนนการเลือกตั้งสภานักเรียน</p>
+            <p id="pdfDevLine"></p>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-sub"><i class="fa-solid fa-check-to-slot"></i> <span
+                id="footerText">ระบบนับคะแนนเลือกตั้งสภานักเรียน</span></div>
+        <div class="footer-dev" id="footerDev">พัฒนาโดย นายธีรเดช เดชสูงเนิน</div>
+    </footer>
+
+    <!-- Party Modal (Enhanced) -->
+    <div class="modal-overlay" id="partyModal">
+        <div class="modal" style="max-width:520px">
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
+                <div id="pmIconPreview"
+                    style="width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,#E63946,#c0392b);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                    <i class="fa-solid fa-landmark" style="color:#fff;font-size:1.2rem"></i>
+                </div>
+                <div>
+                    <h3 id="partyModalTitle" style="margin:0;font-size:1.15rem">เพิ่มพรรคใหม่</h3>
+                    <p style="margin:2px 0 0;font-size:.8rem;color:var(--c-muted)">กรอกข้อมูลพรรคด้านล่าง</p>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label><i class="fa-solid fa-pen"></i> ชื่อพรรค <span style="color:#e74c3c">*</span></label>
+                <input id="pmName" placeholder="เช่น พรรค FUTURE FORWARD">
+            </div>
+            <div class="form-group">
+                <label><i class="fa-solid fa-user-tie"></i> หัวหน้าพรรค</label>
+                <input id="pmLeader" placeholder="ชื่อ-นามสกุล หัวหน้าพรรค (ถ้ามี)">
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                <div class="form-group">
+                    <label><i class="fa-solid fa-palette"></i> สีประจำพรรค</label>
+                    <div style="display:flex;align-items:center;gap:10px">
+                        <input type="color" id="pmColor" value="#E63946"
+                            style="height:42px;width:60px;border:none;cursor:pointer;border-radius:8px"
+                            oninput="updateColorPreview()">
+                        <span id="pmColorHex"
+                            style="font-size:.82rem;color:var(--c-muted);font-family:monospace">#E63946</span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label><i class="fa-solid fa-image"></i> โลโก้พรรค</label>
+                    <input id="pmLogo" placeholder="Google Drive ID" oninput="updateLogoPreview()">
+                    <p style="font-size:.72rem;color:var(--c-muted);margin-top:4px">ใส่ ID ของรูปจาก Google Drive</p>
+                </div>
+            </div>
+
+            <!-- Logo Preview -->
+            <div id="pmLogoPreviewArea"
+                style="display:none;text-align:center;margin:12px 0;padding:16px;background:var(--c-bg);border-radius:12px;border:1px dashed var(--c-border)">
+                <img id="pmLogoPreviewImg"
+                    style="width:80px;height:80px;border-radius:14px;object-fit:cover;box-shadow:0 4px 12px rgba(0,0,0,.12)">
+                <p style="font-size:.75rem;color:var(--c-muted);margin-top:8px">ตัวอย่างโลโก้</p>
+            </div>
+
+            <div class="modal-actions" style="margin-top:20px;gap:10px">
+                <button class="btn btn-outline" onclick="closeModal('partyModal')"
+                    style="border-radius:10px;padding:10px 20px">ยกเลิก</button>
+                <button class="btn btn-primary" id="pmSaveBtn" onclick="saveParty()"
+                    style="border-radius:10px;padding:10px 24px">
+                    <i class="fa-solid fa-save"></i> บันทึกพรรค
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Modal -->
+    <div class="modal-overlay" id="userModal">
+        <div class="modal">
+            <h3 id="userModalTitle">เพิ่มผู้ใช้</h3>
+            <div class="form-group"><label>ชื่อผู้ใช้ (username)</label><input id="umUsername" placeholder="username">
+            </div>
+            <div class="form-group"><label>ชื่อที่แสดง</label><input id="umDisplay" placeholder="ชื่อ-นามสกุล"></div>
+            <div class="form-group"><label>รหัสผ่าน</label><input type="password" id="umPassword" placeholder="••••••">
+            </div>
+            <div class="form-group"><label>บทบาท</label><select id="umRole">
+                    <option value="advisor">ครูที่ปรึกษา (advisor)</option>
+                    <option value="committee">กรรมการสภา (committee)</option>
+                </select></div>
+            <div class="modal-actions">
+                <button class="btn btn-outline" onclick="closeModal('userModal')">ยกเลิก</button>
+                <button class="btn btn-primary" id="umSaveBtn" onclick="saveUser()"><i class="fa-solid fa-save"></i>
+                    บันทึก</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ===== ACCESS CONTROL =====
+        (function () {
+            var role = localStorage.getItem('userRole');
+            if (role === 'committee') { alert('ขออภัย คุณไม่มีสิทธิ์เข้าถึงหน้านี้'); navigateTo('counting'); return; }
+            if (!role) { navigateTo('index'); }
+        })();
+
+        // ===== GLOBALS =====
+        var voteData = {};
+        var partyConfig = {};
+        var electionConfig = {};
+        var editingPartyId = null;
+        var editingUsername = null;
+
+        function logout() { localStorage.removeItem('userRole'); localStorage.removeItem('userName'); navigateTo('index'); }
+
+        // ===== TABS =====
+        document.querySelectorAll('.tab-btn').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                document.querySelectorAll('.tab-btn').forEach(function (b) { b.classList.remove('active'); });
+                document.querySelectorAll('.tab-panel').forEach(function (p) { p.classList.remove('active'); });
+                btn.classList.add('active');
+                document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+                if (btn.dataset.tab === 'parties') loadParties();
+                if (btn.dataset.tab === 'users') loadUsers();
+                if (btn.dataset.tab === 'logs') loadLogs();
+                if (btn.dataset.tab === 'settings') loadSettings();
+            });
+        });
+
+        // ===== TOAST =====
+        function showToast(msg, type) {
+            var t = document.createElement('div');
+            t.className = 'toast toast-' + (type || 'success');
+            t.innerHTML = '<i class="fa-solid fa-' + (type === 'error' ? 'circle-xmark' : type === 'warn' ? 'triangle-exclamation' : 'circle-check') + '"></i> ' + msg;
+            document.getElementById('toastContainer').appendChild(t);
+            setTimeout(function () { t.style.opacity = '0'; t.style.transform = 'translateX(40px)'; setTimeout(function () { t.remove(); }, 300); }, 3000);
+        }
+
+        // ===== MODAL =====
+        function openModal(id) { document.getElementById(id).classList.add('active'); }
+        function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+
+        // ===== LOAD DATA =====
+        function loadData() {
+            if (isApiConfigured()) {
+                apiGet('getVoteData').then(function (d) {
+                    if (!d) return;
+                    voteData = d; partyConfig = d.config || {}; electionConfig = d.electionConfig || {};
+                    renderDashboard(); renderHeader();
+                }).catch(function (e) { console.error(e); });
+            } else {
+                voteData = { party1: 150, party2: 120, party3: 80, totalEligible: 500, noVote: 10, invalidBallot: 5, isLocked: false, config: { '1': { name: 'WANT TO TRY', logoId: '1EiYNuV1-q0tHLyaW7v_tksP1AXge-yAE', color: '#E63946', leader: 'นายสมชาย ใจดี' }, '2': { name: 'BETTER FUTURE', logoId: '1ONxc38OT-JR224YMv74d-xg3YbNmXg00', color: '#457B9D', leader: 'นางสาวสมหญิง รักเรียน' }, '3': { name: 'คำว่าแร่ แพ้คำว่ารัก', logoId: '1UHLwn30CbToqTl58BSgz4J-kp_P33fPy', color: '#6A4C93', leader: '' } }, electionConfig: { electionName: 'การเลือกตั้งสภานักเรียน', academicYear: '2569', schoolName: 'โรงเรียนศรีวิชัยวิทยา', developerName: 'นายธีรเดช เดชสูงเนิน', votingEnabled: true } };
+                partyConfig = voteData.config; electionConfig = voteData.electionConfig;
+                setTimeout(function () { renderDashboard(); renderHeader(); }, 300);
+            }
+        }
+
+        function renderHeader() {
+            var ec = electionConfig;
+            document.getElementById('headerTitle').textContent = 'ระบบนับคะแนน' + ((ec.electionName) || '');
+            document.getElementById('headerSub').textContent = 'ประจำปีการศึกษา ' + (ec.academicYear || '') + ' | ' + (ec.schoolName || '');
+            document.getElementById('footerText').textContent = 'ระบบนี้ใช้เพื่อ' + (ec.electionName || 'การเลือกตั้ง') + ' ' + (ec.schoolName || '');
+            document.getElementById('footerDev').textContent = 'พัฒนาโดย ' + (ec.developerName || '');
+            if (ec.schoolLogoId) document.getElementById('schoolLogo').src = 'https://drive.google.com/thumbnail?id=' + ec.schoolLogoId + '&sz=w200';
+            if (ec.councilLogoId) document.getElementById('councilLogo').src = 'https://drive.google.com/thumbnail?id=' + ec.councilLogoId + '&sz=w200';
+        }
+
+        function renderDashboard() {
+            var ids = Object.keys(partyConfig);
+            // Vote grid
+            var html = '';
+            var totalParty = 0;
+            ids.forEach(function (id) {
+                var p = partyConfig[id]; var v = voteData['party' + id] || 0; totalParty += v;
+                html += '<div class="vote-card" style="border-top-color:' + (p.color || '#ccc') + '">' +
+                    '<div class="party-num">เบอร์ ' + id + '</div>' +
+                    '<div class="party-name">' + p.name + '</div>' +
+                    '<div class="vote-count" style="color:' + (p.color || '#264653') + '">' + v + '</div>' +
+                    '<div style="font-size:.82rem;color:var(--c-muted)">คะแนน</div></div>';
+            });
+            document.getElementById('voteGrid').innerHTML = html;
+
+            var totalVoted = totalParty + (voteData.noVote || 0) + (voteData.invalidBallot || 0);
+            var eligible = voteData.totalEligible || 0;
+            var absent = Math.max(0, eligible - totalVoted);
+            var turnout = eligible > 0 ? ((totalVoted / eligible) * 100).toFixed(2) : '0';
+
+            document.getElementById('statsRow').innerHTML =
+                statBox(eligible, 'ผู้มีสิทธิทั้งหมด', 'var(--c-black)') +
+                statBox(totalVoted, 'มาใช้สิทธิ (' + turnout + '%)', 'var(--c-green)') +
+                statBox(absent, 'ไม่มาใช้สิทธิ', 'var(--c-muted)') +
+                statBox(totalParty, 'คะแนนถูกต้อง', '#2563eb');
+            document.getElementById('statsRow2').innerHTML =
+                statBox(voteData.noVote || 0, 'ไม่ประสงค์ลงคะแนน', 'var(--c-warn)') +
+                statBox(voteData.invalidBallot || 0, 'บัตรเสีย', 'var(--c-danger)');
+
+            // Lock status
+            if (voteData.isLocked) {
+                document.getElementById('lockedBanner').classList.add('show');
+                document.getElementById('lockedInfo').textContent = 'ยืนยันโดย: ' + (voteData.lockedBy || '') + ' | เมื่อ: ' + (voteData.lockedAt || '');
+                document.getElementById('statusPill').className = 'status-pill status-locked';
+                document.getElementById('statusPill').innerHTML = '<i class="fa-solid fa-lock"></i> ล็อคแล้ว';
+                document.getElementById('signatureSection').style.display = 'none';
+                document.getElementById('resetBtn').disabled = true;
+                document.getElementById('unlockBtn').style.display = 'inline-flex';
+            } else {
+                document.getElementById('lockedBanner').classList.remove('show');
+                document.getElementById('statusPill').className = 'status-pill status-active';
+                document.getElementById('statusPill').textContent = 'กำลังนับคะแนน';
+                document.getElementById('signatureSection').style.display = '';
+                document.getElementById('resetBtn').disabled = false;
+                document.getElementById('unlockBtn').style.display = 'none';
+            }
+        }
+
+        function statBox(val, lbl, color) {
+            return '<div class="stat-box"><div class="stat-val" style="color:' + color + '">' + val + '</div><div class="stat-lbl">' + lbl + '</div></div>';
+        }
+
+        // ===== PARTY CRUD =====
+        function loadParties() {
+            var ids = Object.keys(partyConfig);
+            var grid = document.getElementById('partyCardsGrid');
+            if (!grid) return;
+
+            if (ids.length === 0) {
+                grid.innerHTML = '<div class="party-empty-state"><i class="fa-solid fa-landmark"></i><p style="font-size:1.1rem;font-weight:600;margin-bottom:4px">ยังไม่มีพรรค</p><p style="font-size:.85rem">กดปุ่ม "เพิ่มพรรคใหม่" เพื่อเริ่มต้น</p></div>';
+                return;
+            }
+
+            // Calculate total valid votes for progress bar
+            var totalValid = 0;
+            ids.forEach(function (id) { totalValid += (voteData['party' + id] || 0); });
+
+            var html = '';
+            ids.forEach(function (id) {
+                var p = partyConfig[id];
+                var v = voteData['party' + id] || 0;
+                var pct = totalValid > 0 ? ((v / totalValid) * 100).toFixed(1) : '0.0';
+                var color = p.color || '#6B7280';
+                var logoHtml = p.logoId
+                    ? '<img src="https://drive.google.com/thumbnail?id=' + p.logoId + '&sz=w200" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'">' +
+                    '<span class="logo-fallback" style="display:none"><i class="fa-solid fa-landmark"></i></span>'
+                    : '<span class="logo-fallback"><i class="fa-solid fa-landmark"></i></span>';
+                var leaderHtml = p.leader ? '<div class="party-card-leader"><i class="fa-solid fa-user-tie" style="margin-right:4px;font-size:.7rem"></i>' + p.leader + '</div>' : '';
+
+                html += '<div class="party-card-item">' +
+                    '<div class="party-card-colorstrip" style="background:linear-gradient(90deg,' + color + ',' + color + '88)"></div>' +
+                    '<div class="party-card-body">' +
+                    '<div class="party-card-header">' +
+                    '<div class="party-card-logo" style="border:2px solid ' + color + '33">' + logoHtml + '</div>' +
+                    '<div class="party-card-info">' +
+                    '<div class="party-card-number" style="color:' + color + '">เบอร์ ' + id + '</div>' +
+                    '<div class="party-card-name">' + p.name + '</div>' +
+                    leaderHtml +
+                    '</div>' +
+                    '</div>' +
+                    '<div class="party-card-stats">' +
+                    '<div>' +
+                    '<div class="party-card-vote-count" style="color:' + color + '">' + v.toLocaleString() + '</div>' +
+                    '<div class="party-card-vote-label">คะแนน</div>' +
+                    '</div>' +
+                    '<div class="party-card-progress">' +
+                    '<div class="party-card-progress-track">' +
+                    '<div class="party-card-progress-fill" style="width:' + pct + '%;background:' + color + '"></div>' +
+                    '</div>' +
+                    '<div class="party-card-progress-label">' + pct + '%</div>' +
+                    '</div>' +
+                    '</div>' +
+                    '<div class="party-card-actions">' +
+                    '<button class="btn btn-outline btn-sm" onclick="editParty(\'' + id + '\')" style="gap:5px"><i class="fa-solid fa-pen"></i> แก้ไข</button>' +
+                    '<button class="btn btn-danger btn-sm" onclick="delParty(\'' + id + '\')" style="gap:5px"><i class="fa-solid fa-trash"></i> ลบ</button>' +
+                    '</div>' +
+                    '</div>' +
+                    '</div>';
+            });
+            grid.innerHTML = html;
+        }
+
+        function updateColorPreview() {
+            var color = document.getElementById('pmColor').value;
+            document.getElementById('pmColorHex').textContent = color;
+            var icon = document.getElementById('pmIconPreview');
+            if (icon) icon.style.background = 'linear-gradient(135deg,' + color + ',' + color + '99)';
+        }
+
+        function updateLogoPreview() {
+            var val = document.getElementById('pmLogo').value.trim();
+            var area = document.getElementById('pmLogoPreviewArea');
+            var img = document.getElementById('pmLogoPreviewImg');
+            if (val) {
+                img.src = 'https://drive.google.com/thumbnail?id=' + val + '&sz=w200';
+                area.style.display = 'block';
+            } else {
+                area.style.display = 'none';
+            }
+        }
+
+        function openPartyModal(id) {
+            editingPartyId = id || null;
+            document.getElementById('partyModalTitle').textContent = id ? 'แก้ไขพรรค เบอร์ ' + id : 'เพิ่มพรรคใหม่';
+            if (id && partyConfig[id]) {
+                document.getElementById('pmName').value = partyConfig[id].name;
+                document.getElementById('pmLeader').value = partyConfig[id].leader || '';
+                document.getElementById('pmLogo').value = partyConfig[id].logoId || '';
+                document.getElementById('pmColor').value = partyConfig[id].color || '#E63946';
+            } else {
+                document.getElementById('pmName').value = '';
+                document.getElementById('pmLeader').value = '';
+                document.getElementById('pmLogo').value = '';
+                document.getElementById('pmColor').value = '#E63946';
+            }
+            updateColorPreview();
+            updateLogoPreview();
+            openModal('partyModal');
+        }
+        function editParty(id) { openPartyModal(id); }
+
+        function saveParty() {
+            var name = document.getElementById('pmName').value.trim();
+            var leader = document.getElementById('pmLeader').value.trim();
+            var logo = document.getElementById('pmLogo').value.trim();
+            var color = document.getElementById('pmColor').value;
+            if (!name) { showToast('กรุณากรอกชื่อพรรค', 'error'); return; }
+            var btn = document.getElementById('pmSaveBtn'); btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังบันทึก...';
+            if (isApiConfigured()) {
+                var partyData = { name: name, logoId: logo, color: color, leader: leader };
+                var action = editingPartyId ? 'updateParty' : 'addParty';
+                var payload = editingPartyId
+                    ? { partyId: editingPartyId, partyData: partyData }
+                    : { name: name, logoId: logo, color: color, leader: leader };
+                apiPost(action, payload).then(function (r) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fa-solid fa-save"></i> บันทึกพรรค';
+                    if (r.success) {
+                        showToast(r.message);
+                        closeModal('partyModal');
+                        loadData();
+                        setTimeout(loadParties, 500);
+                    } else {
+                        showToast(r.message, 'error');
+                    }
+                }).catch(function (e) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fa-solid fa-save"></i> บันทึกพรรค';
+                    showToast(e.message, 'error');
+                });
+            } else {
+                showToast('Local mode: saved', 'success');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-save"></i> บันทึกพรรค';
+                closeModal('partyModal');
+            }
+        }
+
+        function delParty(id) {
+            var partyName = partyConfig[id] ? partyConfig[id].name : 'เบอร์ ' + id;
+            if (!confirm('⚠️ ยืนยันลบพรรค "' + partyName + '" (เบอร์ ' + id + ')?\n\nข้อมูลพรรคนี้จะถูกลบออกจากระบบ')) return;
+            if (isApiConfigured()) {
+                apiPost('deleteParty', { partyId: id }).then(function (r) {
+                    if (r.success) {
+                        showToast(r.message);
+                        loadData();
+                        setTimeout(loadParties, 500);
+                    } else {
+                        showToast(r.message, 'error');
+                    }
+                });
+            }
+        }
+
+        // ===== USER CRUD =====
+        function loadUsers() {
+            if (isApiConfigured()) {
+                apiGet('getUsers').then(renderUsers).catch(function (e) { console.error(e); });
+            } else { renderUsers([{ username: 'advisor', displayName: 'ครูที่ปรึกษา', role: 'advisor', active: true, createdAt: '—' }, { username: 'committee', displayName: 'กรรมการสภา', role: 'committee', active: true, createdAt: '—' }]); }
+        }
+        function renderUsers(users) {
+            var html = '';
+            users.forEach(function (u) {
+                var roleBadge = u.role === 'advisor' ? '<span class="badge badge-blue"><i class="fa-solid fa-user-shield"></i> ครูที่ปรึกษา</span>' : '<span class="badge badge-green"><i class="fa-solid fa-user"></i> กรรมการ</span>';
+                var statusBadge = u.active ? '<span class="badge badge-green">ใช้งาน</span>' : '<span class="badge badge-red">ปิดใช้งาน</span>';
+                html += '<tr><td>' + u.username + '</td><td>' + u.displayName + '</td><td>' + roleBadge + '</td><td>' + statusBadge + '</td><td style="font-size:.78rem">' + (u.createdAt || '—') + '</td>' +
+                    '<td><button class="btn btn-outline btn-sm" onclick="editUser(\'' + u.username + '\',\'' + u.displayName + '\',\'' + u.role + '\',' + u.active + ')"><i class="fa-solid fa-pen"></i></button> ' +
+                    '<button class="btn btn-danger btn-sm" onclick="delUser(\'' + u.username + '\')"><i class="fa-solid fa-trash"></i></button></td></tr>';
+            });
+            document.getElementById('userTableBody').innerHTML = html;
+        }
+
+        function openUserModal(username) {
+            editingUsername = username || null;
+            document.getElementById('userModalTitle').textContent = username ? 'แก้ไขผู้ใช้: ' + username : 'เพิ่มผู้ใช้ใหม่';
+            document.getElementById('umUsername').value = ''; document.getElementById('umDisplay').value = '';
+            document.getElementById('umPassword').value = ''; document.getElementById('umRole').value = 'committee';
+            document.getElementById('umUsername').disabled = false;
+            openModal('userModal');
+        }
+        function editUser(un, dn, role, active) {
+            editingUsername = un;
+            document.getElementById('userModalTitle').textContent = 'แก้ไขผู้ใช้: ' + un;
+            document.getElementById('umUsername').value = un; document.getElementById('umUsername').disabled = true;
+            document.getElementById('umDisplay').value = dn; document.getElementById('umPassword').value = '';
+            document.getElementById('umRole').value = role;
+            openModal('userModal');
+        }
+        function saveUser() {
+            var un = document.getElementById('umUsername').value.trim();
+            var dn = document.getElementById('umDisplay').value.trim();
+            var pw = document.getElementById('umPassword').value;
+            var role = document.getElementById('umRole').value;
+            var btn = document.getElementById('umSaveBtn'); btn.disabled = true;
+            if (isApiConfigured()) {
+                if (editingUsername) {
+                    var updates = { displayName: dn, role: role }; if (pw) updates.password = pw;
+                    apiPost('updateUser', { username: editingUsername, updates: updates }).then(function (r) { btn.disabled = false; if (r.success) { showToast(r.message); closeModal('userModal'); loadUsers(); } else showToast(r.message, 'error'); }).catch(function (e) { btn.disabled = false; showToast(e.message, 'error'); });
+                } else {
+                    if (!un || !pw) { btn.disabled = false; showToast('กรุณากรอกข้อมูลให้ครบ', 'error'); return; }
+                    apiPost('addUser', { username: un, password: pw, role: role, displayName: dn || un }).then(function (r) { btn.disabled = false; if (r.success) { showToast(r.message); closeModal('userModal'); loadUsers(); } else showToast(r.message, 'error'); }).catch(function (e) { btn.disabled = false; showToast(e.message, 'error'); });
+                }
+            } else { btn.disabled = false; showToast('Local mode', 'success'); closeModal('userModal'); }
+        }
+        function delUser(un) {
+            if (!confirm('ยืนยันลบผู้ใช้: ' + un + '?')) return;
+            if (isApiConfigured()) {
+                apiPost('deleteUser', { username: un }).then(function (r) { if (r.success) { showToast(r.message); loadUsers(); } else showToast(r.message, 'error'); });
+            }
+        }
+
+        // ===== SETTINGS =====
+        function loadSettings() {
+            var ec = electionConfig;
+            document.getElementById('cfgElectionName').value = ec.electionName || '';
+            document.getElementById('cfgYear').value = ec.academicYear || '';
+            document.getElementById('cfgSchool').value = ec.schoolName || '';
+            document.getElementById('cfgSchoolLogo').value = ec.schoolLogoId || '';
+            document.getElementById('cfgCouncilLogo').value = ec.councilLogoId || '';
+            document.getElementById('cfgDev').value = ec.developerName || '';
+            document.getElementById('cfgEligible').value = voteData.totalEligible || 0;
+            document.getElementById('cfgVoting').value = String(ec.votingEnabled !== false);
+        }
+        function saveSettings() {
+            var updates = {
+                electionName: document.getElementById('cfgElectionName').value,
+                academicYear: document.getElementById('cfgYear').value,
+                schoolName: document.getElementById('cfgSchool').value,
+                schoolLogoId: document.getElementById('cfgSchoolLogo').value,
+                councilLogoId: document.getElementById('cfgCouncilLogo').value,
+                developerName: document.getElementById('cfgDev').value,
+                votingEnabled: document.getElementById('cfgVoting').value
+            };
+            var eligible = parseInt(document.getElementById('cfgEligible').value) || 0;
+            if (isApiConfigured()) {
+                apiPost('updateElectionConfig', { updates: updates }).then(function (r) {
+                    if (r.success) {
+                        apiPost('editStat', { statId: 'totalEligible', value: eligible }).then(function (r2) { showToast('บันทึกเรียบร้อย'); loadData(); });
+                    } else showToast(r.message, 'error');
+                });
+            } else { showToast('Local mode: saved'); }
+        }
+
+        // ===== LOGS =====
+        function loadLogs() {
+            if (isApiConfigured()) {
+                apiGet('getAccessLogs', { limit: 100 }).then(renderLogs).catch(function (e) { console.error(e); });
+            } else { renderLogs([{ timestamp: '16/2/2569', name: 'ครูที่ปรึกษา', role: 'advisor', status: 'Success', message: 'เข้าระบบสำเร็จ' }]); }
+        }
+        function renderLogs(logs) {
+            var html = '';
+            logs.forEach(function (l) {
+                var sc = l.status === 'Success' ? 'badge-green' : l.status === 'Failed' ? 'badge-red' : 'badge-gray';
+                html += '<tr><td style="font-size:.78rem">' + l.timestamp + '</td><td>' + l.name + '</td><td>' + l.role + '</td><td><span class="badge ' + sc + '">' + l.status + '</span></td><td style="font-size:.78rem">' + l.message + '</td></tr>';
+            });
+            document.getElementById('logTableBody').innerHTML = html || '<tr><td colspan="5" style="text-align:center;color:var(--c-muted)">ไม่มีประวัติ</td></tr>';
+        }
+
+        // ===== LOCK / UNLOCK / RESET =====
+        function lockResults() {
+            var tn = document.getElementById('teacherName').value.trim();
+            var cc = document.getElementById('confirmCode').value;
+            if (!tn) { showToast('กรุณาใส่ชื่อครู', 'error'); return; }
+            if (!cc) { showToast('กรุณาใส่รหัสยืนยัน', 'error'); return; }
+            if (!confirm('ยืนยันล็อคผลคะแนน? การกระทำนี้จะป้องการแก้ไขเพิ่มเติม')) return;
+            var btn = document.getElementById('lockBtn'); btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังล็อค...';
+            if (isApiConfigured()) {
+                apiPost('lockResults', { teacherName: tn, confirmCode: cc }).then(function (r) { if (r.success) { showToast(r.message); loadData(); } else { showToast(r.message, 'error'); } btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-lock"></i> ล็อค'; }).catch(function (e) { showToast(e.message, 'error'); btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-lock"></i> ล็อค'; });
+            }
+        }
+        function unlockResults() {
+            var code = prompt('กรุณาใส่รหัสผ่านครูที่ปรึกษาเพื่อปลดล็อค:');
+            if (!code) return;
+            if (isApiConfigured()) {
+                apiPost('unlockResults', { code: code }).then(function (r) { if (r.success) { showToast(r.message); loadData(); } else showToast(r.message, 'error'); });
+            }
+        }
+        function resetData() {
+            if (voteData.isLocked) { showToast('ไม่สามารถรีเซ็ตได้ขณะล็อค', 'error'); return; }
+            if (!confirm('ยืนยันรีเซ็ตข้อมูลทั้งหมด? การกระทำนี้ไม่สามารถย้อนกลับได้')) return;
+            if (!confirm('คุณแน่ใจจริงๆ หรือไม่?')) return;
+            var btn = document.getElementById('resetBtn'); btn.disabled = true;
+            if (isApiConfigured()) {
+                apiPost('resetData', {}).then(function (r) { if (r.success) { showToast(r.message); loadData(); } else showToast(r.message, 'error'); btn.disabled = false; });
+            }
+        }
+
+        // ===== PDF EXPORT =====
+        function exportPDF() {
+            var ids = Object.keys(partyConfig);
+            var parties = ids.map(function (id) { return { id: id, name: partyConfig[id].name, votes: voteData['party' + id] || 0 }; }).sort(function (a, b) { return b.votes - a.votes; });
+            var validVotes = 0; parties.forEach(function (p) { validVotes += p.votes; });
+            var totalVoted = validVotes + (voteData.noVote || 0) + (voteData.invalidBallot || 0);
+            var eligible = voteData.totalEligible || 0;
+            var turnout = eligible > 0 ? ((totalVoted / eligible) * 100).toFixed(2) : '0';
+
+            var ec = electionConfig;
+            document.getElementById('pdfTitle').textContent = 'ผลการนับคะแนน' + (ec.electionName || '');
+            document.getElementById('pdfSubtitle').textContent = 'ประจำปีการศึกษา ' + (ec.academicYear || '') + ' | ' + (ec.schoolName || '');
+            var sb = document.getElementById('pdfStatusBadge');
+            if (voteData.isLocked) { sb.style.background = '#e8f5e9'; sb.style.color = '#2e7d32'; sb.textContent = '✓ ผลคะแนนเป็นทางการ'; }
+            else { sb.style.background = '#fff3e0'; sb.style.color = '#e65100'; sb.textContent = '⏳ ผลคะแนนเบื้องต้น'; }
+
+            var rb = document.getElementById('pdfRankingBody'); rb.innerHTML = '';
+            parties.forEach(function (p, i) {
+                var pct = validVotes > 0 ? ((p.votes / validVotes) * 100).toFixed(2) : '0';
+                rb.innerHTML += '<tr style="border-bottom:1px solid #ddd;background:' + (i === 0 ? '#fffbeb' : '#fff') + '"><td style="padding:12px;text-align:center;font-weight:bold">' + (i + 1) + '</td><td style="padding:12px">เบอร์ ' + p.id + '</td><td style="padding:12px;font-weight:600">' + p.name + '</td><td style="padding:12px;text-align:right;font-weight:bold">' + p.votes + '</td><td style="padding:12px;text-align:right;color:#666">' + pct + '%</td></tr>';
+            });
+
+            document.getElementById('pdfStats').innerHTML =
+                '<div style="background:#f5f5f5;padding:15px;border-radius:8px;text-align:center"><div style="font-size:1.8rem;font-weight:700;color:#264653">' + eligible + '</div><div style="font-size:.85rem;color:#666">ผู้มีสิทธิ</div></div>' +
+                '<div style="background:#e8f5e9;padding:15px;border-radius:8px;text-align:center"><div style="font-size:1.8rem;font-weight:700;color:#2A9D8F">' + totalVoted + '</div><div style="font-size:.85rem;color:#666">มาใช้สิทธิ (' + turnout + '%)</div></div>' +
+                '<div style="background:#fff3e0;padding:15px;border-radius:8px;text-align:center"><div style="font-size:1.8rem;font-weight:700;color:#666">' + Math.max(0, eligible - totalVoted) + '</div><div style="font-size:.85rem;color:#666">ไม่มาใช้สิทธิ</div></div>';
+
+            document.getElementById('pdfTeacher').textContent = voteData.isLocked ? (voteData.lockedBy || '-') : 'ยังไม่ได้ยืนยัน';
+            document.getElementById('pdfDate').textContent = voteData.isLocked ? (voteData.lockedAt || '-') : '-';
+            document.getElementById('pdfDevLine').textContent = 'พัฒนาโดย ' + (ec.developerName || '') + ' | พิมพ์เมื่อ: ' + new Date().toLocaleString('th-TH');
+
+            var el = document.getElementById('pdfContent'); el.style.display = 'block';
+            html2pdf().set({ margin: [10, 10, 10, 10], filename: 'ผลการนับคะแนน-' + (ec.academicYear || '') + '.pdf', image: { type: 'jpeg', quality: .98 }, html2canvas: { scale: 2, useCORS: true }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } }).from(el).save().then(function () { el.style.display = 'none'; }).catch(function () { el.style.display = 'none'; showToast('สร้าง PDF ผิดพลาด', 'error'); });
+        }
+
+        // ===== INIT =====
+        window.onload = function () {
+            loadData();
+            setInterval(loadData, 5000);
+        };
+    </script>
+</body>
+
+</html>

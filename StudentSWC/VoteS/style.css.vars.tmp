@@ -1,0 +1,50 @@
+<style>
+/* ====================================
+   ระบบนับคะแนนการเลือกตั้งสภานักเรียน
+   สีประจำโรงเรียน: เขียว, เหลือง, ดำ
+   ==================================== */
+
+:root {
+    /* Primary Colors (School) */
+    --color-primary-green: #2A9D8F;
+    --color-primary-yellow: #E9C46A;
+    --color-primary-black: #264653;
+
+    /* Secondary Colors */
+    --color-bg-white: #FFFFFF;
+    --color-bg-light: #F8F9FA;
+    --color-bg-cream: #FFFBF0;
+
+    /* Accent Colors */
+    --color-accent-green: #1D7A70;
+    --color-accent-yellow: #D4A84B;
+
+    /* Text Colors */
+    --color-text-main: #1D1D1F;
+    --color-text-dark: #1D1D1F;
+    --color-text-muted: #6E6E73;
+
+    /* Status Colors */
+    --color-success: #27AE60;
+    --color-warning: #F39C12;
+    --color-danger: #E74C3C;
+
+    /* Ranking Special Colors */
+    --color-gold: #D4AF37;
+    --color-silver: #8E8E93;
+    --color-bronze: #CD7F32;
+
+    /* Borders & Shadows */
+    --color-border: #e5e7eb;
+    --border-radius-sm: 8px;
+    --border-radius-md: 16px;
+    --border-radius-lg: 24px;
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.15);
+
+    /* Transitions */
+    --transition-fast: 0.2s ease;
+    --transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+</style>
